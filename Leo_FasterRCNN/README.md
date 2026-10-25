@@ -4,15 +4,22 @@ RSNA Pneumonia Detection：在胸部 X 光上框出肺炎區域。
 
 ## 成績
 
-| 項目 | 分數 |
-|---|---|
-| Kaggle Private | **0.13139** |
-| Kaggle Public | 0.06349 |
-| 自切驗證集（5,337 位病人，比賽同規則） | 0.2285 |
+| 版本 | 自切驗證集 | Kaggle Private | Kaggle Public |
+|---|---|---|---|
+| baseline（3 epoch） | 0.2285 | 0.13139 | 0.06349 |
+| baseline + 框縮成 87.5% | 0.2027 | **0.15278** | 0.07142 |
 
-![Kaggle 分數](figures/07_kaggle_score.png)
+![Kaggle 分數](figures/07_kaggle_score.png)（截圖是 baseline 那次）
 
-驗證分數比 Kaggle 分數高很多，原因還沒查清楚，可能的方向：Public 只用一小部分測試圖、測試集標註標準可能不同、信心門檻 0.75 是在驗證集上挑的。
+### 縮框實驗（`shrink_boxes.py`、`shrink_results.csv`）
+
+參考第 1 名（[i-pan/kaggle-rsna18](https://github.com/i-pan/kaggle-rsna18)，寬高縮成 87.5%）和第 3 名（[pmcheng/rsna-pneumonia](https://github.com/pmcheng/rsna-pneumonia)，每邊縮 17%）的做法，以中心點為準把預測框縮小。
+
+| 縮放比例 | 0.800 | 0.850 | 0.875 | 0.900 | 0.950 | 1.000 |
+|---|---|---|---|---|---|---|
+| 驗證分數 | 0.1675 | 0.1935 | 0.2027 | 0.2120 | 0.2238 | 0.2285 |
+
+在自己的驗證集上越縮越差，但用第 1 名的 87.5% 上傳後 Kaggle Private 從 0.131 升到 0.153。兩邊結論相反，推測測試集的框標得比訓練資料緊，這也可能是驗證分數和 Kaggle 分數落差大的原因之一。87.5% 是沿用第 1 名的數字，沒有拿 Kaggle 分數去挑比例。
 
 ## 做法
 
@@ -43,6 +50,7 @@ tar -xf data/rsna-pneumonia-detection-challenge.zip -C data
 python preprocess.py                      # 約 2 分鐘
 python train_baseline.py --epochs 8       # 每個 epoch 約 25 分鐘
 python finish.py                          # 產生 runs/baseline/submission.csv 與 figures/05、06
+python shrink_boxes.py                    # 縮框實驗：驗證集上試 80%–100%
 ```
 
 比賽資料依 Kaggle 規則不能再散布，模型權重（158MB）超過 GitHub 單檔上限，所以這兩樣都沒有放上來，照上面的步驟可以重新產生。

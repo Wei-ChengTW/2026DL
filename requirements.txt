@@ -1,0 +1,5 @@
+Flask>=3.0,<4
+numpy>=1.24,<2
+pydicom>=3.0,<4
+Pillow>=10
+kaggle>=1.7.4.5

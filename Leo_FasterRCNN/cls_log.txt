@@ -1,0 +1,5 @@
+epoch 1/5 train_loss 0.3850 val_auc 0.8717 val_acc 0.8372 16.6 min
+epoch 2/5 train_loss 0.3535 val_auc 0.8749 val_acc 0.8477 42.4 min
+epoch 3/5 train_loss 0.3187 val_auc 0.8831 val_acc 0.8479 10.4 min
+epoch 4/5 train_loss 0.2487 val_auc 0.8710 val_acc 0.8381 9.6 min
+epoch 5/5 train_loss 0.1754 val_auc 0.8696 val_acc 0.8331 9.6 min

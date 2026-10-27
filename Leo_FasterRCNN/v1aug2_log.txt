@@ -1,0 +1,4 @@
+epoch 1/4 train_loss 0.0846 val_score 0.2093 (threshold 0.6) 24.8 min
+epoch 2/4 train_loss 0.0765 val_score 0.2256 (threshold 0.7) 25.5 min
+epoch 3/4 train_loss 0.0746 val_score 0.2386 (threshold 0.7) 27.5 min
+epoch 4/4 train_loss 0.0714 val_score 0.2333 (threshold 0.7) 38.9 min

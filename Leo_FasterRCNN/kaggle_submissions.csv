@@ -1,0 +1,41 @@
+fileName,description,publicScore,privateScore
+t2_m2_s0.86_0.575_0.5.csv,two-thr m2 s0.86 0.575/0.5,0.10317,0.19253
+t2_m2_s0.86_0.6_0.5.csv,two-thr m2 s0.86 0.6/0.5,0.10317,0.19003
+t2_m2_s0.86_0.55_0.45.csv,two-thr m2 s0.86 0.55/0.45,0.10317,0.19003
+t2_m2_s0.86_0.55_0.5.csv,two-thr m2 s0.86 0.55/0.5,0.10317,0.19406
+t2_m2_s0.86_0.55_0.65.csv,two-thr m2 s0.86 0.55/0.65,0.11111,0.18892
+t2_m2_s0.86_0.45_0.6.csv,two-thr m2 s0.86 0.45/0.6,0.08641,0.18985
+t2_m2_s0.86_0.5_0.65.csv,two-thr m2 s0.86 0.5/0.65,0.11111,0.18895
+t2_m2_s0.86_0.5_0.6.csv,two-thr m2 s0.86 0.5/0.6,0.11111,0.19041
+x_m3v2_s0.86_t0.55.csv,m3v2 s0.86 t0.55,0.09523,0.18969
+x_m3v1_s0.86_t0.55.csv,m3v1 s0.86 t0.55,0.09722,0.19389
+x_flip4_s0.86_t0.6.csv,flip4 s0.86 t0.6,0.08730,0.18756
+x_flip4_s0.86_t0.5.csv,flip4 s0.86 t0.5,0.08134,0.19210
+x_full2_s0.86_t0.55.csv,full2 s0.86 t0.55,0.11904,0.18190
+x_m4_s0.86_t0.5.csv,m4 s0.86 t0.5,0.07118,0.18817
+x_m4_s0.86_t0.55.csv,m4 s0.86 t0.55,0.08730,0.18798
+x_flip4_s0.86_t0.55.csv,flip4 s0.86 t0.55,0.08730,0.19391
+sweep_s0.86_t0.55.csv,sweep 0.86 0.55,0.11111,0.19516
+sweep_s0.875_t0.575.csv,sweep 0.875 0.575,0.11111,0.19215
+sweep_s0.875_t0.525.csv,sweep 0.875 0.525,0.10317,0.19255
+sweep_s0.95_t0.55.csv,sweep s0.95 t0.55,0.08730,0.18125
+sweep_s0.9_t0.55.csv,sweep s0.9 t0.55,0.09523,0.19266
+sweep_s0.84_t0.55.csv,sweep s0.84 t0.55,0.11111,0.19435
+sweep_s0.8_t0.55.csv,sweep s0.8 t0.55,0.11904,0.18818
+sweep_s0.875_t0.5.csv,sweep s0.875 t0.5,0.10317,0.19331
+sweep_s0.875_t0.45.csv,sweep s0.875 t0.45,0.08024,0.18917
+sweep_s0.875_t0.4.csv,sweep s0.875 t0.4,0.06565,0.18357
+sweep_s0.875_t0.75.csv,sweep s0.875 t0.75,0.11111,0.14044
+sweep_s0.875_t0.7.csv,sweep s0.875 t0.7,0.11111,0.16182
+sweep_s0.875_t0.6.csv,sweep s0.875 t0.6,0.11111,0.18597
+sweep_s0.875_t0.55.csv,sweep s0.875 t0.55,0.11111,0.19457
+submission_vote4_shrink0.875.csv,vote4 v1aug2+v2aug+v1aug_full+v2aug_full 0.65 shrink0.875,0.11111,0.17523
+submission_full_vote_shrink0.875.csv,v1aug_full+v2aug_full vote 0.65 shrink0.875,0.13492,0.17093
+submission_v1aug2_v2aug_vote_shrink0.875.csv,"ensemble v1aug2+v2aug vote (val 0.2435),SubmissionStatus.COMPLETE,0.11111
+submission_shrink0.875.csv,"Faster R-CNN v1 + aug (val 0.2386),SubmissionStatus.COMPLETE,0.11904
+submission_shrink0.875.csv,"Faster R-CNN v1 + aug, shrink 0.875",SubmissionStatus.COMPLETE
+submission_shrink0.875.csv,"Faster R-CNN v2 + aug, shrink 0.875",SubmissionStatus.COMPLETE
+submission_ens_full8_shrink0.875.csv,"full8 + RetinaNet NMS ensemble,SubmissionStatus.COMPLETE,0.07936
+submission_shrink0.875.csv,full8 epoch3 (val 0.2325) shrink 0.875,0.07936,0.16831
+submission_shrink0875.csv,"Diagnostic: same model,SubmissionStatus.COMPLETE,0.07142
+submission.csv,"Faster R-CNN R50-FPN COCO pretrained, 3 epochs, conf 0.75 (val 0.2285)"

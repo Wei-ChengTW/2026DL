@@ -6,6 +6,7 @@ import argparse
 import os
 import random
 import time
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,11 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights, fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.models.detection import RetinaNet_ResNet50_FPN_V2_Weights, retinanet_resnet50_fpn_v2
+from torchvision.models.detection import FasterRCNN_ResNet50_FPN_V2_Weights, fasterrcnn_resnet50_fpn_v2
+from torchvision import tv_tensors
+from torchvision.transforms import v2 as T
+from torchvision.models.detection.retinanet import RetinaNetClassificationHead
 
 DATA = "data"
 SIZE = 512             # 前處理縮好的影像邊長
@@ -34,12 +40,22 @@ def load_boxes():
     return boxes
 
 
+# 加強版資料擴增（--aug）：翻轉 + 小幅平移縮放 + 亮度對比，框座標由 torchvision 自動跟著變
+AUG = T.Compose([
+    T.RandomHorizontalFlip(),
+    T.RandomAffine(degrees=0, translate=(0.05, 0.05), scale=(0.85, 1.15)),
+    T.ColorJitter(brightness=0.2, contrast=0.2),
+    T.SanitizeBoundingBoxes(min_size=4),  # 被移出畫面或縮到太小的框丟掉
+])
+
+
 class RSNADataset(torch.utils.data.Dataset):
-    def __init__(self, ids, boxes_by_id, img_dir, train):
+    def __init__(self, ids, boxes_by_id, img_dir, train, aug=False):
         self.ids = list(ids)
         self.boxes_by_id = boxes_by_id
         self.img_dir = img_dir
         self.train = train
+        self.aug = aug
 
     def __len__(self):
         return len(self.ids)
@@ -50,6 +66,12 @@ class RSNADataset(torch.utils.data.Dataset):
         img = Image.open(f"{self.img_dir}/{pid}.png").convert("RGB")
         # 沒肺炎的片子 boxes 是空的 (0, 4)，模型會把整張都當背景學
         boxes = torch.tensor(self.boxes_by_id.get(pid, []), dtype=torch.float32).reshape(-1, 4)
+
+        if self.train and self.aug:
+            target = {"boxes": tv_tensors.BoundingBoxes(boxes, format="XYXY", canvas_size=(SIZE, SIZE)),
+                      "labels": torch.ones(len(boxes), dtype=torch.int64)}
+            img, target = AUG(tv_tensors.Image(TF.to_tensor(img)), target)
+            return img.as_subclass(torch.Tensor), {"boxes": target["boxes"].as_subclass(torch.Tensor), "labels": target["labels"]}, pid
 
         # 資料擴增：一半機率左右翻轉，框的 x 座標也要跟著翻
         if self.train and random.random() < 0.5:
@@ -66,7 +88,20 @@ def collate(batch):
 
 
 # ---------------- 模型 ----------------
-def build_model():
+def build_model(arch="frcnn"):
+    if arch == "retinanet":
+        # RetinaNet：一階段偵測器，沒有先挑候選區域，直接在每個位置猜框；跟 Faster R-CNN 犯的錯不太一樣，適合拿來合併
+        model = retinanet_resnet50_fpn_v2(weights=RetinaNet_ResNet50_FPN_V2_Weights.DEFAULT, min_size=SIZE, max_size=SIZE)
+        head = model.head.classification_head
+        model.head.classification_head = RetinaNetClassificationHead(
+            head.cls_logits.in_channels, head.num_anchors, 2, norm_layer=partial(torch.nn.GroupNorm, 32))  # v2 版的頭用 GroupNorm，換頭時要跟原本一致
+        return model
+    if arch == "frcnn_v2":
+        # v2：同樣是 Faster R-CNN，但骨幹和偵測頭訓練方式改良過，COCO 成績 37.0 -> 46.7
+        model = fasterrcnn_resnet50_fpn_v2(weights=FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT, min_size=SIZE, max_size=SIZE)
+        in_features = model.roi_heads.box_predictor.cls_score.in_features
+        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)
+        return model
     # min_size/max_size 設成 512，不然 torchvision 會自動把圖放大到 800
     model = fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT, min_size=SIZE, max_size=SIZE)
     # COCO 有 91 類，換掉最後的分類頭，改成 2 類：0 = 背景、1 = 肺炎
@@ -130,7 +165,7 @@ def predict(model, loader, device):
 
 def best_threshold(preds, boxes_by_id):
     """在驗證集上試不同信心門檻，挑分數最高的"""
-    results = {round(t, 2): dataset_score(preds, boxes_by_id, t) for t in np.arange(0.3, 0.96, 0.05)}
+    results = {round(t, 2): dataset_score(preds, boxes_by_id, t) for t in np.arange(0.1, 0.96, 0.05)}
     t = max(results, key=results.get)
     return t, results[t], results
 
@@ -143,6 +178,9 @@ def main():
     ap.add_argument("--lr", type=float, default=0.01)
     ap.add_argument("--limit", type=int, default=0, help="只用前 N 張，測試用")
     ap.add_argument("--out", default="runs/baseline")
+    ap.add_argument("--arch", default="frcnn", choices=["frcnn", "frcnn_v2", "retinanet"])
+    ap.add_argument("--aug", action="store_true", help="加強版資料擴增")
+    ap.add_argument("--full", action="store_true", help="驗證集也拿來訓練（最後交件用）；驗證分數會偏高、只當參考，存最後一輪")
     args = ap.parse_args()
 
     random.seed(42)
@@ -156,15 +194,17 @@ def main():
     val_ids = split[split.split == "val"].patientId.tolist()
     if args.limit:
         train_ids, val_ids = train_ids[:args.limit], val_ids[:args.limit // 4]
+    if args.full:
+        train_ids = train_ids + val_ids
 
     train_loader = torch.utils.data.DataLoader(
-        RSNADataset(train_ids, boxes_by_id, f"{DATA}/train_512", train=True),
+        RSNADataset(train_ids, boxes_by_id, f"{DATA}/train_512", train=True, aug=args.aug),
         batch_size=args.batch, shuffle=True, num_workers=4, collate_fn=collate, persistent_workers=True)
     val_loader = torch.utils.data.DataLoader(
         RSNADataset(val_ids, boxes_by_id, f"{DATA}/train_512", train=False),
         batch_size=16, shuffle=False, num_workers=4, collate_fn=collate)
 
-    model = build_model().to(device)
+    model = build_model(args.arch).to(device)
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(params, lr=args.lr, momentum=0.9, weight_decay=1e-4)
     # 學習率：前 500 步從很小慢慢升上來（warmup，避免一開始梯度太大把預訓練權重弄壞），之後 cosine 慢慢降到 0
@@ -202,10 +242,10 @@ def main():
         print(msg, flush=True)
         log.write(msg + "\n")
         log.flush()
-        if score > best:
+        if score > best or args.full:
             best = score
             # 轉成 Python float：torch.load 預設只接受基本型別，numpy 的數字會被擋
-            torch.save({"model": model.state_dict(), "threshold": float(t), "val_score": float(score)},
+            torch.save({"model": model.state_dict(), "arch": args.arch, "threshold": float(t), "val_score": float(score)},
                        f"{args.out}/best.pth")
 
     # 用驗證分數最好的那個 epoch 預測測試集，產生提交檔

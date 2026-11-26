@@ -23,7 +23,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Windows (PowerShell)
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-uv tool install kaggle
+uv tool install "kaggle>=1.8"   # 舊版 1.7.x 沒有 `kaggle auth login`
 kaggle --version
 ```
 
@@ -49,6 +49,8 @@ mkdir -p data/rsna
 kaggle competitions download -c rsna-pneumonia-detection-challenge -p data/rsna
 cd data/rsna && unzip -q rsna-pneumonia-detection-challenge.zip && rm rsna-pneumonia-detection-challenge.zip && cd ../..
 ```
+
+Windows 沒有 `unzip`：PowerShell 用 `tar -xf`，Git Bash 要用 `/c/Windows/System32/tar.exe -xf`（Git Bash 自己的 tar 不能解 zip）。
 
 檢查：
 

@@ -1,2 +1,7 @@
 data/
 *.zip
+.venv/
+runs/
+.playwright-mcp/
+*.pt
+__pycache__/

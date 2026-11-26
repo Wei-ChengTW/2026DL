@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101719">
+    <title>RSNA · Lung Opacity Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="RSNA detection home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 5v22M5 16h22" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="1.5" opacity=".45"/></svg>
+          </span>
+          <span><strong>RAD<span>·</span>FIND</strong><small>IMAGING RESEARCH LAB</small></span>
+        </a>
+        <div class="topbar-right">
+          <div class="environment"><span class="live-dot"></span><span id="environmentLabel">LOCAL ENVIRONMENT</span></div>
+          <div class="topbar-divider"></div>
+          <span class="dataset-label">RSNA PNEUMONIA CHALLENGE <b>2018</b></span>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <section class="hero-row">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span>OBJECT DETECTION · RESEARCH DEMO</div>
+            <h1>胸腔影像<span>偵測</span></h1>
+            <p class="hero-copy">以 Faster R-CNN 定位 X 光影像中的肺部混濁區域，並在留出驗證影像上查看預測框。</p>
+          </div>
+          <div class="model-chip">
+            <span class="chip-icon">F</span>
+            <div><small>DETECTOR</small><strong>Faster R-CNN</strong></div>
+            <span class="chip-separator"></span>
+            <div><small>BACKBONE</small><strong>ResNet50-FPN</strong></div>
+          </div>
+        </section>
+
+        <section class="metric-grid" aria-label="Model summary">
+          <article class="metric-card metric-primary">
+            <div class="metric-top"><span>VALIDATION SCORE</span><span class="metric-icon">↗</span></div>
+            <div class="metric-value" id="mapValue">—<small id="mapUnit"></small></div>
+            <div class="metric-foot"><span class="metric-accent"></span><span id="metricName">mAP @ IoU 0.4</span></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-top"><span>VALIDATION SET</span><span class="metric-icon muted">▦</span></div>
+            <div class="metric-value" id="valCount">—</div>
+            <div class="metric-foot"><span class="neutral-dot"></span><span><b id="positiveCount">—</b> 張含混濁標註</span></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-top"><span>TRAINING PROGRESS</span><span class="metric-icon muted">◷</span></div>
+            <div class="metric-value"><span id="epochValue">—</span><small id="epochTotal"></small></div>
+            <div class="metric-foot"><span class="neutral-dot"></span><span id="trainCount">等待訓練資料</span></div>
+          </article>
+          <article class="metric-card status-card">
+            <div class="metric-top"><span>MODEL STATUS</span><span class="metric-icon muted">◉</span></div>
+            <div class="status-value"><span class="status-pulse" id="statusPulse"></span><strong id="modelStatus">載入中</strong></div>
+            <div class="metric-foot"><span class="neutral-dot"></span><span id="deviceValue">檢查運算裝置</span></div>
+          </article>
+        </section>
+
+        <section class="workbench">
+          <article class="viewer-card panel">
+            <div class="panel-heading viewer-heading">
+              <div><div class="section-kicker">IMAGE EXPLORER <span>01</span></div><h2>影像與定位結果</h2></div>
+              <div class="viewer-tools">
+                <label class="select-wrap" for="sampleSelect"><span>驗證樣本</span><select id="sampleSelect" aria-label="Choose validation image"><option>讀取樣本中…</option></select><i>⌄</i></label>
+                <button id="uploadButton" class="button button-outline" type="button"><span class="upload-icon">↑</span>上傳 DICOM</button>
+                <input id="fileInput" type="file" accept=".dcm,.dicom,application/dicom" hidden>
+              </div>
+            </div>
+            <div class="viewer-toolbar">
+              <div class="study-info"><span class="study-square"></span><span id="patientLabel">尚未選擇影像</span><span class="study-tag" id="studyTag">VALIDATION</span></div>
+              <div class="overlay-actions"><button id="truthToggle" class="toggle-button active" type="button" aria-pressed="true"><span class="legend-box truth"></span>醫師標註</button><span class="toolbar-divider"></span><span class="coordinate-label" id="imageDimensions">— × — px</span></div>
+            </div>
+            <div class="image-stage" id="imageStage">
+              <div class="image-placeholder" id="imagePlaceholder"><div class="placeholder-symbol">＋</div><strong>選擇驗證影像</strong><span>載入後會顯示模型偵測框與醫師標註</span></div>
+              <canvas id="imageCanvas" hidden aria-label="Chest X-ray with detection boxes"></canvas>
+              <div class="stage-loading" id="stageLoading" hidden><span class="spinner"></span><span>正在分析影像…</span></div>
+            </div>
+            <div class="viewer-footer">
+              <div class="legend"><span><i class="legend-box prediction"></i>模型預測</span><span><i class="legend-box truth"></i>醫師標註</span></div>
+              <div class="source-label"><span class="small-shield">⌂</span><span id="sourceLabel">資料留存在本機</span></div>
+            </div>
+          </article>
+
+          <aside class="results-card panel">
+            <div class="panel-heading results-heading"><div><div class="section-kicker">PREDICTION REVIEW <span>02</span></div><h2>偵測摘要</h2></div><span class="result-index" id="resultCount">0 BOX</span></div>
+            <div class="threshold-block">
+              <div class="threshold-label"><span>顯示信心門檻</span><strong id="thresholdValue">0.25</strong></div>
+              <input id="thresholdSlider" type="range" min="0.05" max="0.90" step="0.05" value="0.25" aria-label="Confidence threshold">
+              <div class="range-labels"><span>0.05</span><span>0.90</span></div>
+            </div>
+            <div class="summary-strip">
+              <div><span>MODEL BOXES</span><strong id="predictionCount">—</strong></div>
+              <div class="summary-divider"></div>
+              <div><span>GROUND TRUTH</span><strong id="truthCount">—</strong></div>
+            </div>
+            <div class="detection-list-wrap">
+              <div class="list-heading"><span>MODEL PREDICTIONS</span><span>CONFIDENCE</span></div>
+              <div id="detectionList" class="detection-list"><div class="empty-list">選擇影像後顯示偵測結果</div></div>
+            </div>
+            <div class="note-card" id="modelNote"><span class="note-icon">i</span><p>此頁展示模型定位結果與資料集標註，僅供研究與課程展示。</p></div>
+          </aside>
+        </section>
+
+        <section class="history-panel panel">
+          <div class="panel-heading history-heading"><div><div class="section-kicker">RUN HISTORY <span>03</span></div><h2>訓練紀錄</h2></div><span class="history-note" id="historyNote">開始訓練後會記錄每個 epoch</span></div>
+          <div class="history-table-wrap">
+            <table class="history-table"><thead><tr><th>EPOCH</th><th>TRAIN LOSS</th><th>VALIDATION mAP @ 0.4</th><th>LEARNING RATE</th><th>ELAPSED</th></tr></thead><tbody id="historyBody"><tr><td colspan="5" class="table-empty">尚無訓練紀錄</td></tr></tbody></table>
+          </div>
+        </section>
+
+        <footer class="page-footer"><span>RSNA Pneumonia Detection Challenge · Faster R-CNN</span><span>本機研究展示 · 不作為醫療診斷依據</span></footer>
+      </main>
+    </div>
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </body>
+</html>

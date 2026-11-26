@@ -1,0 +1,4 @@
+/rsna-pneumonia-detection-challenge/
+/outputs/
+__pycache__/
+*.py[cod]

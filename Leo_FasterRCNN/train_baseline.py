@@ -23,7 +23,7 @@ from torchvision.transforms import v2 as T
 from torchvision.models.detection.retinanet import RetinaNetClassificationHead
 
 DATA = "data"
-SIZE = 512             # 前處理縮好的影像邊長
+SIZE = int(os.environ.get("RSNA_SIZE", 512))  # 前處理縮好的影像邊長，可用環境變數 RSNA_SIZE 換解析度
 SCALE = SIZE / 1024    # 原始標註是 1024 尺度，要乘上這個比例
 IOU_THRESHOLDS = np.arange(0.4, 0.76, 0.05)  # 比賽評分用的 IoU 門檻: 0.40, 0.45, ..., 0.75
 
@@ -180,16 +180,18 @@ def main():
     ap.add_argument("--out", default="runs/baseline")
     ap.add_argument("--arch", default="frcnn", choices=["frcnn", "frcnn_v2", "retinanet"])
     ap.add_argument("--aug", action="store_true", help="加強版資料擴增")
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--split", default="split.csv", help="換一種 train/val 切法時用")
     ap.add_argument("--full", action="store_true", help="驗證集也拿來訓練（最後交件用）；驗證分數會偏高、只當參考，存最後一輪")
     args = ap.parse_args()
 
-    random.seed(42)
-    torch.manual_seed(42)
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
     os.makedirs(args.out, exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     boxes_by_id = load_boxes()
-    split = pd.read_csv(f"{DATA}/split.csv")
+    split = pd.read_csv(f"{DATA}/{args.split}")
     train_ids = split[split.split == "train"].patientId.tolist()
     val_ids = split[split.split == "val"].patientId.tolist()
     if args.limit:
@@ -198,10 +200,10 @@ def main():
         train_ids = train_ids + val_ids
 
     train_loader = torch.utils.data.DataLoader(
-        RSNADataset(train_ids, boxes_by_id, f"{DATA}/train_512", train=True, aug=args.aug),
+        RSNADataset(train_ids, boxes_by_id, f"{DATA}/train_{SIZE}", train=True, aug=args.aug),
         batch_size=args.batch, shuffle=True, num_workers=4, collate_fn=collate, persistent_workers=True)
     val_loader = torch.utils.data.DataLoader(
-        RSNADataset(val_ids, boxes_by_id, f"{DATA}/train_512", train=False),
+        RSNADataset(val_ids, boxes_by_id, f"{DATA}/train_{SIZE}", train=False),
         batch_size=16, shuffle=False, num_workers=4, collate_fn=collate)
 
     model = build_model(args.arch).to(device)
@@ -251,9 +253,9 @@ def main():
     # 用驗證分數最好的那個 epoch 預測測試集，產生提交檔
     ckpt = torch.load(f"{args.out}/best.pth", map_location=device)
     model.load_state_dict(ckpt["model"])
-    test_ids = [f[:-4] for f in os.listdir(f"{DATA}/test_512")]
+    test_ids = [f[:-4] for f in os.listdir(f"{DATA}/test_{SIZE}")]
     test_loader = torch.utils.data.DataLoader(
-        RSNADataset(test_ids, {}, f"{DATA}/test_512", train=False),
+        RSNADataset(test_ids, {}, f"{DATA}/test_{SIZE}", train=False),
         batch_size=16, shuffle=False, num_workers=4, collate_fn=collate)
     test_preds = predict(model, test_loader, device)
     rows = []

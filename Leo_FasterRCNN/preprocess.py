@@ -9,7 +9,7 @@ from PIL import Image
 from sklearn.model_selection import train_test_split
 
 DATA = "data"
-SIZE = 512
+SIZE = int(os.environ.get("RSNA_SIZE", 512))  # 想用更高解析度時設環境變數 RSNA_SIZE
 
 
 def convert(args):

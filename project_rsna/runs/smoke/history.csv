@@ -1,0 +1,2 @@
+epoch,train_loss,val_score,best_th,lr,sec
+1,0.3217,0.0713,0.3,2.3552105276453957e-05,83

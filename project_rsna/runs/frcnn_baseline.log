@@ -1,0 +1,17 @@
+﻿train pos=5110 neg=17571 | val=4003
+..\.venv\Scripts\python.exe : 
+At line:1 char:302
++ ... tch {} } }; ..\.venv\Scripts\python.exe train_frcnn.py --name frcnn_b ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+train:   0%|          | 0/1278 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Users\hiimd\AppData\Local\Programs\Python\Python312\Lib\multiprocessing\spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hiimd\AppData\Local\Programs\Python\Python312\Lib\multiprocessing\spawn.py", line 132, in _main
+    self = reduction.pickle.load(from_parent)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_pickle.UnpicklingError: pickle data was truncated

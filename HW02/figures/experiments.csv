@@ -1,0 +1,8 @@
+Conv layers,Optimizer,Augmentation,Params (M),Train Acc,Best Val Acc,Test Acc,Train-Test Gap,Time (s)
+6,AdamW,Crop+Flip,3.25,0.8643,0.8367,0.8319,0.0324,186
+3,AdamW,Crop+Flip,2.47,0.7869,0.7716,0.764,0.0229,140
+9,AdamW,Crop+Flip,4.02,0.8855,0.8509,0.8516,0.0339,243
+6,SGD,Crop+Flip,3.25,0.8925,0.8578,0.8533,0.0392,191
+6,Adam,Crop+Flip,3.25,0.8667,0.8383,0.835,0.0317,191
+6,AdamW,None,3.25,0.9433,0.855,0.8546,0.0887,157
+6,AdamW,Flip,3.25,0.9123,0.8562,0.8575,0.0548,168

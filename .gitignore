@@ -1,0 +1,14 @@
+.venv/
+data/
+*.zip
+*.dcm
+*.pth
+*.pt
+__pycache__/
+.ipynb_checkpoints/
+kaggle.json
+
+# HW02 CIFAR-10 data
+cifar-10-python.tar.gz
+cifar-10-batches-py/
+cifar10/

@@ -5,3 +5,4 @@ runs/
 .playwright-mcp/
 *.pt
 __pycache__/
+*.log
